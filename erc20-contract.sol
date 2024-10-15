@@ -3,90 +3,45 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract NoorToken {
-    string public name = "Noor";
-    string public symbol = "NOOR";
-    uint8 public decimals = 18;
-    uint256 public totalSupply = 1000000 * (10 ** uint256(decimals));
-    address public owner;
-   
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) allowances;
-   
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-   
-    constructor() {
-        owner = msg.sender;
-        balances[owner] = totalSupply;
+// Define your ERC20 token contract
+contract MyToken is ERC20 {
+    // Constructor that mints the initial supply to the deployer of the contract
+    constructor() ERC20("MyToken", "MTK") {
+        uint256 initialSupply = 1000000 * 10 ** decimals(); // Set initial supply to 1,000,000 tokens (with 18 decimals)
+        _mint(msg.sender, initialSupply); // Mint initial supply to deployer's address
     }
-   
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function.");
-        _;
+
+    // Function to mint new tokens to a specified address
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
     }
-   
-    function balanceOf(address account) public view returns (uint256) {
-        return balances[account];
+
+    // Function to burn tokens from a specified address
+    function burn(address from, uint256 amount) public {
+        _burn(from, amount);
     }
-   
-    function transfer(address recipient, uint256 amount) public returns (bool) {
-        require(recipient != address(0), "ERC20: transfer to the zero address");
-        require(amount <= balances[msg.sender], "ERC20: transfer amount exceeds balance");
-       
-        balances[msg.sender] -= amount;
-        balances[recipient] += amount;
-       
-        emit Transfer(msg.sender, recipient, amount);
-       
+
+    // Function to transfer tokens from the caller's address to a specified address
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        _transfer(_msgSender(), to, amount);
         return true;
     }
-   
-    function approve(address spender, uint256 amount) public returns (bool) {
-        allowances[msg.sender][spender] = amount;
-       
-        emit Approval(msg.sender, spender, amount);
-       
+
+    // Function to approve an address to spend a certain amount of tokens on behalf of the caller
+    function approve(address spender, uint256 amount) public override returns (bool) {
+        _approve(_msgSender(), spender, amount);
         return true;
     }
-   
-    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
-        require(recipient != address(0), "ERC20: transfer to the zero address");
-        require(amount <= balances[sender], "ERC20: transfer amount exceeds balance");
-        require(amount <= allowances[sender][msg.sender], "ERC20: transfer amount exceeds allowance");
-       
-        balances[sender] -= amount;
-        balances[recipient] += amount;
-        allowances[sender][msg.sender] -= amount;
-       
-        emit Transfer(sender, recipient, amount);
-       
+
+    // Function to transfer tokens from one address to another using an allowance
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        _transfer(from, to, amount);
+        _approve(from, _msgSender(), allowance(from, _msgSender()) - amount);
         return true;
     }
-   
-    function allowance(address account, address spender) public view returns (uint256) {
-        return allowances[account][spender];
-    }
-   
-    function burn(uint256 amount) public returns (bool) {
-        require(amount <= balances[msg.sender], "ERC20: burn amount exceeds balance");
-       
-        balances[msg.sender] -= amount;
-        totalSupply -= amount;
-       
-        emit Transfer(msg.sender, address(0), amount);
-       
-        return true;
-    }
-   
-    function mint(uint256 amount) public onlyOwner returns (bool) {
-        require(totalSupply + amount <= 2**256 - 1, "ERC20: total supply exceeds uint256");
-       
-        balances[owner] += amount;
-        totalSupply += amount;
-       
-        emit Transfer(address(0), owner, amount);
-       
-        return true;
+
+    // Function to get the balance of an account
+    function getBalanceOf(address account) public view returns (uint256) {
+        return balanceOf(account);
     }
 }
